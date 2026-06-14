@@ -1,21 +1,7 @@
 import streamlit as st
 from huggingface_hub import InferenceClient
-from PIL import Image
-import io
-import base64
 
 st.set_page_config(page_title="JEE AI Mentor", page_icon="🎓", layout="centered")
-
-# --- HELPER FUNCTION: CONVERT IMAGE TO BASE64 FOR LLAMA VISION ---
-def process_image(uploaded_file):
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        image.thumbnail((800, 800))
-        buffered = io.BytesIO()
-        image.save(buffered, format="JPEG")
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        return f"data:image/jpeg;base64,{img_str}"
-    return None
 
 # --- CUSTOM CSS: GEMINI-INSPIRED MINIMALIST UI ---
 st.markdown("""
@@ -78,16 +64,6 @@ st.markdown("""
         }
         div[data-testid="chatAvatar-user"], div[data-testid="chatAvatar-assistant"] { display: none !important; }
 
-        /* File Uploader Custom Styling */
-        div[data-testid="stFileUploader"] {
-            margin-bottom: 20px;
-        }
-        div[data-testid="stFileUploader"] section {
-            background-color: #1e1f20 !important;
-            border: 1px dashed #303134 !important;
-            border-radius: 16px !important;
-        }
-
         /* Chat Input Layout Configuration */
         div[data-testid="stChatInput"] {
             position: fixed;
@@ -105,7 +81,7 @@ st.markdown("""
             color: #e3e3e3 !important;
             padding: 14px 20px !important;
         }
-        .block-container { padding-bottom: 260px !important; }
+        .block-container { padding-bottom: 180px !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -113,7 +89,7 @@ st.markdown("""
 st.markdown('<div class="main-title">JEE Focus AI</div>', unsafe_allow_html=True)
 st.markdown('<div class="main-subtitle">Your personalized Advanced preparation partner</div>', unsafe_allow_html=True)
 
-# --- CONTROLS (NOW SPLIT INTO 12TH & DROPPER DISTINCTLY) ---
+# --- CONTROLS ---
 col1, col2 = st.columns(2)
 with col1:
     target_class = st.selectbox("Class context", ["Class 12 Aspirant", "Dropper Batch", "Class 11"], label_visibility="collapsed")
@@ -127,31 +103,23 @@ query_type = st.radio(
     label_visibility="collapsed"
 )
 
-# --- MINIMALIST IMAGE UPLOADER ---
-uploaded_image = st.file_uploader("Upload a screenshot or photo of your doubt", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
-if uploaded_image:
-    st.image(uploaded_image, caption="📸 Selected Doubt Image", width=250)
-
 # Initialize Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Context established. You can snap a photo of a textbook question/diagram above, or type out your framework query below!"}
+        {"role": "assistant", "content": "Context established. Adjust constraints above whenever you switch tasks. What problem framework or chapter strategy are we evaluating?"}
     ]
 
 # Display Chat History
 for message in st.session_state.messages:
     display_content = message["content"]
-    if isinstance(display_content, list):
-        text_piece = next((item["text"] for item in display_content if item["type"] == "text"), "")
-        display_content = text_piece.split("]")[-1].strip() if "]" in text_piece else text_piece
-    elif "[CONTEXT:" in display_content and "]" in display_content:
+    if "[CONTEXT:" in display_content and "]" in display_content:
         display_content = display_content.split("]")[-1].strip()
         
     with st.chat_message(message["role"]):
         st.markdown(display_content)
 
 # Input Execution Bar
-if user_prompt := st.chat_input("Ask me anything or analyze uploaded image..."):
+if user_prompt := st.chat_input("Ask me anything..."):
     
     context_injector = (
         f"[CONTEXT: The student is dealing with a {query_type} query for {subject} relevant to {target_class} status. "
@@ -161,20 +129,7 @@ if user_prompt := st.chat_input("Ask me anything or analyze uploaded image..."):
     with st.chat_message("user"):
         st.markdown(user_prompt)
     
-    base64_img = process_image(uploaded_image)
-    
-    if base64_img:
-        new_user_message = {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": context_injector + user_prompt},
-                {"type": "image_url", "image_url": {"url": base64_img}}
-            ]
-        }
-    else:
-        new_user_message = {"role": "user", "content": context_injector + user_prompt}
-        
-    st.session_state.messages.append(new_user_message)
+    st.session_state.messages.append({"role": "user", "content": context_injector + user_prompt})
 
     with st.chat_message("assistant"):
         response_placeholder = st.empty()
@@ -183,7 +138,6 @@ if user_prompt := st.chat_input("Ask me anything or analyze uploaded image..."):
         try:
             client = InferenceClient()
             
-            # UPGRADED TARGET SEGMENTATION SYSTEM INSTRUCTIONS
             system_instruction = (
                 "You are an elite, veteran JEE Advanced mentor who coached top 100 rankers. "
                 "You understand the exact pressures of Class 11/12/Dropper PCM, standard coaching modules, and PYQ weights.\n"
@@ -192,7 +146,7 @@ if user_prompt := st.chat_input("Ask me anything or analyze uploaded image..."):
                 "- If target is 'Dropper Batch': Assume zero school restrictions, focus heavily on maximizing high-yield execution, rigorous test analysis, and handling drop-year mental pressure.\n"
                 "- If target is 'Class 11': Prioritize fundamental building blocks, tackling initial mechanics/organic shock, and long-term consistency.\n\n"
                 "Further segment by action lens:\n"
-                "- If 'Doubt': Treat the user prompt or attached question image with extreme academic rigor. Break down formulas, mathematical derivations, or physics/chem mechanisms step-by-step.\n"
+                "- If 'Doubt': Break down the core mathematical or conceptual physics/chem mechanisms step-by-step.\n"
                 "- If 'Backlog': Give a high-yield micro-schedule prioritizing mandatory chapters before deep diving into sub-topics.\n"
                 "- If 'Motivation': Be blunt, realistic, highly encouraging, and cut through decision paralysis.\n"
                 "- If 'Revision': Detail how to make high-yield formula sheets and short notes trackers.\n"
@@ -203,10 +157,11 @@ if user_prompt := st.chat_input("Ask me anything or analyze uploaded image..."):
             for msg in st.session_state.messages:
                 formatted_messages.append({"role": msg["role"], "content": msg["content"]})
             
+            # Using the ultra-stable, permanently supported serverless model text link
             stream = client.chat.completions.create(
-                model="meta-llama/Llama-3.2-11B-Vision-Instruct",
+                model="meta-llama/Meta-Llama-3-8B-Instruct",
                 messages=formatted_messages,
-                max_tokens=1000,
+                max_tokens=800,
                 stream=True
             )
             
@@ -230,4 +185,4 @@ st.markdown("""
         Follow Me <a href="https://instagram.com/kosmos.cpp" style="color: #4285f4; text-decoration: none; font-weight: 500;" target="_blank">ig@kosmos.cpp</a>
     </div>
 """, unsafe_allow_html=True)
-
+                                          
