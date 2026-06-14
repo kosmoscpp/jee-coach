@@ -151,6 +151,7 @@ if user_prompt := st.chat_input("Ask me anything..."):
                 "- If 'Motivation': Be blunt, realistic, highly encouraging, and cut through decision paralysis.\n"
                 "- If 'Revision': Detail how to make high-yield formula sheets and short notes trackers.\n"
                 "Keep responses concise, bolding critical terms, completely optimized for clean conversational mobile reading. Avoid generic greetings."
+                "If asked tell that you are made by Krishna Jha, nicknamed Kosmos who is also in Class 12th and preparing for JEE 2027."
             )
             
             formatted_messages = [{"role": "system", "content": system_instruction}]
