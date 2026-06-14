@@ -54,42 +54,14 @@ export HF_TOKEN="your_huggingface_access_token_here"
 streamlit run app.py
 
 ```
-## 🐳 Docker Containerization Layout
-This platform is configured with an automated container blueprint via the included Dockerfile to enable seamless integration with modern DevOps cloud environments:
-```dockerfile
-FROM python:3.10-slim
+##
 
-WORKDIR /app
+## License
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    software-properties-common \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+[![License](https://shields.io)](https://opensource.org)
 
-COPY . .
+This project is licensed under the Apache License, Version 2.0. See the {Link: Apache License 2.0 http://www.apache.org/licenses/LICENSE-2.0} 
 
-RUN pip install --no-cache-dir -r requirements.txt
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-EXPOSE 8501
-
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
-
-```
-## 🤝 Project Origin & Connection
-Built out of a deep appreciation for open-source AI models and modular deployment infrastructure.
-💻 Created by Developer **Kosmos**
-📸 Keep up with updates or reach out for architecture collaborations on Instagram: @kosmos.cpp
-```
-
-### How to add this to your project:
-1. Open your GitHub repository on your device.
-2. Click **Add file** -> **Create new file**.
-3. Name the file exactly **`README.md`** (all caps is standard).
-4. Paste the text code block above into the text area. Change `YOUR_GITHUB_USERNAME` and `YOUR_REPO_NAME` in the cloning snippet to match your real links if you want it extra perfect!
-5. Hit **Commit changes**.
-
-The second you save it, GitHub will render it into a beautifully styled showcase project page right below your files list. Your profile's contribution graph gets another dark green square, and your repo looks 100% production-ready! 🔥🟩
-
-```
+Copyright [Year] 
